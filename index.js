@@ -3,12 +3,13 @@ import connectDB from "./connect.db.js";
 import Course from "./course.model.js";
 import mongoose from "mongoose";
 
+// express app
 const app = express();
 
-// to make app understand json
+// to make app understand json data
 app.use(express.json());
 
-// database connection //
+// database connection and table creation //
 connectDB();
 
 // routes //
@@ -21,14 +22,14 @@ app.post("/course/add", async (req, res) => {
   return res.status(200).send("course added");
 });
 
-// ? get course lists:
+// ! get course lists: (we use async/await because it is a promise)
 app.get("/course/list", async (req, res) => {
   const courses = await Course.find();
 
   return res.status(200).send({ message: "success", courses });
 });
 
-// ? get course by id:
+// ! get course by id: (Total steps : 1. check valid mongo id, 2. check course exist or not)
 app.get("/course/details/:id", async (req, res) => {
   const courseId = req.params.id;
 
@@ -51,7 +52,7 @@ app.get("/course/details/:id", async (req, res) => {
   return res.status(200).send({ message: "success", requiredCourse });
 });
 
-// ? delete course by id:
+// ! delete course by id: (total 7 steps: 1. check valid mongo id, 2. check course exist or not, 3. delete course by id)
 app.delete("/course/delete/:id", async (req, res) => {
   const courseId = req.params.id;
 
@@ -74,8 +75,33 @@ app.delete("/course/delete/:id", async (req, res) => {
 
 });
 
-// port and server allocation //
+
+//  ! update course : (total 7 steps: 1. check valid mongo id, 2. check course exist or not, 3. update course by id)
+app.put("/course/update/:id", async (req, res) => {
+  const courseId = req.params.id;
+
+  const isValidMongoId = mongoose.isValidObjectId(courseId);
+
+  if (!isValidMongoId) {
+    return res.status(400).send({ message: "invalid mongo id" });
+  }
+
+  const requiredCourse = await Course.findOne({ _id: courseId });
+
+  if (!requiredCourse) {
+    return res.status(404).send({ message: "course not found" });
+  }
+
+  await Course.updateOne({ _id: courseId }, req.body);
+
+  return res.status(200).send({ message: "course updated" });
+
+})
+
+// port and server allocation  //
 const port = 8000;
 app.listen(port, () => {
   console.log("first server is running on port 8000");
 });
+
+
